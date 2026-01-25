@@ -15,32 +15,29 @@
         .btn-group { display: flex; gap: 10px; }
         .hand-btn { width: 90px; height: 90px; font-size: 40px; border: none; border-radius: 15px; background: white; box-shadow: 0 5px #ba68c8; cursor: pointer; }
         #ui { position: absolute; top: 160px; width: 100%; text-align: center; color: #7b1fa2; font-size: 24px; font-weight: bold; }
-        #startScreen { position: absolute; top: 150px; width: 100%; height: calc(100vh - 300px); background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; }
         
-        /* 他のゲームはこちらボタンのスタイル */
-        #more-games-btn {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 18px;
-            background: #ff4081;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: bold;
-            display: none; /* ゲームオーバー時のみ表示 */
+        /* 終了後メニュー */
+        #end-menu { 
+            position: absolute; top: 150px; width: 100%; height: calc(100vh - 300px); 
+            background: rgba(255,255,255,0.95); display: none; flex-direction: column; 
+            align-items: center; justify-content: center; z-index: 60; 
         }
+        .menu-btn { 
+            width: 220px; padding: 15px; margin: 10px; font-size: 20px; 
+            border: none; border-radius: 30px; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center;
+        }
+        #retry-btn { background: #9c27b0; color: white; box-shadow: 0 5px #7b1fa2; }
+        #more-games-btn { background: #ff4081; color: white; box-shadow: 0 5px #c2185b; }
     </style>
 </head>
 <body>
     <div id="ad-top"><iframe src="ad.html"></iframe></div>
     <div id="ad-bottom"><iframe src="ad.html"></iframe></div>
     
-    <div id="startScreen">
-        <h1 style="color:#7b1fa2;">あとだしジャンケン</h1>
-        <p>指示通りに手を選んでね！</p>
-        <button id="goButton" style="padding:15px 40px; font-size:20px; background:#9c27b0; color:white; border:none; border-radius:30px;">スタート！</button>
-        <a href="★" id="list-btn" style="margin-top:20px; padding:10px 20px; background:#eee; color:#333; text-decoration:none; border-radius:20px; font-size:14px;">他のゲームはこちら</a>
+    <div id="end-menu">
+        <h2 id="result-msg" style="color:#7b1fa2;">GAME OVER</h2>
+        <button id="retry-btn" class="menu-btn" onclick="startNewGame()">もう一度遊ぶ</button>
+        <a href="https://saaaachi.github.io/Color-Finder/" id="more-games-btn" class="menu-btn">他のゲームはこちら</a>
     </div>
 
     <div id="ui">SCORE: 0</div>
@@ -52,7 +49,6 @@
             <button class="hand-btn" onclick="checkAnswer('✌️')">✌️</button>
             <button class="hand-btn" onclick="checkAnswer('✋')">✋</button>
         </div>
-        <a href="https://saaaachi.github.io/Color-Finder/" id="more-games-btn">他のゲームはこちら</a>
     </div>
 
     <script>
@@ -60,11 +56,12 @@
         const insts = ['勝って！', '負けて！'];
         let currentHand, currentInst, score = 0, gameActive = false, timer;
 
-        document.getElementById("goButton").onclick = () => {
-            document.getElementById("startScreen").style.display = "none";
-            document.getElementById("more-games-btn").style.display = "none";
-            gameActive = true; score = 0; nextQuestion();
-        };
+        function startNewGame() {
+            document.getElementById("end-menu").style.display = "none";
+            gameActive = true; score = 0; 
+            document.getElementById("ui").innerText = "SCORE: 0";
+            nextQuestion();
+        }
 
         function nextQuestion() {
             if(!gameActive) return;
@@ -72,7 +69,6 @@
             currentInst = insts[Math.floor(Math.random()*2)];
             document.getElementById("enemy-hand").innerText = currentHand;
             document.getElementById("instruction").innerText = currentInst;
-            document.getElementById("ui").innerText = "SCORE: " + score;
             
             clearTimeout(timer);
             timer = setTimeout(() => { gameOver("時間切れ！"); }, Math.max(800, 2000 - score * 50));
@@ -86,17 +82,28 @@
             else result = 2;
 
             const isCorrect = (currentInst === '勝って！' && result === 1) || (currentInst === '負けて！' && result === 2);
-            if(isCorrect) { score++; nextQuestion(); } else { gameOver("まちがい！"); }
+            if(isCorrect) { 
+                score++; 
+                document.getElementById("ui").innerText = "SCORE: " + score;
+                nextQuestion(); 
+            } else { 
+                gameOver("まちがい！"); 
+            }
         }
 
         function gameOver(msg) { 
             gameActive = false; 
-            // ボタンを表示
-            document.getElementById("more-games-btn").style.display = "block";
-            alert(msg + "\nSCORE: " + score); 
-            // リロードするとボタンが消えるので、リロードせずに再スタートを待つか、
-            // そのままページ遷移を促す形にしています。
+            clearTimeout(timer);
+            document.getElementById("result-msg").innerText = msg + "\nSCORE: " + score;
+            document.getElementById("end-menu").style.display = "flex";
         }
+
+        // 初回起動
+        window.onload = () => {
+            document.getElementById("end-menu").style.display = "flex";
+            document.getElementById("result-msg").innerText = "あとだしジャンケン";
+            document.getElementById("retry-btn").innerText = "スタート！";
+        };
 
         setInterval(() => { const fs = document.querySelectorAll('iframe'); fs.forEach(f => { const s = f.src; f.src = "about:blank"; setTimeout(() => f.src = s, 100); }); }, 30000);
     </script>
