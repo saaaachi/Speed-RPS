@@ -5,60 +5,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Speed RPS - 第28弾</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #f3e5f5; font-family: sans-serif; touch-action: none; }
-        #ad-top, #ad-bottom { position: fixed; left: 0; width: 100%; height: 150px; background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; }
-        #ad-top { top: 0; } #ad-bottom { bottom: 0; }
-        iframe { border: none; width: 100%; height: 150px; }
-        #game-area { margin-top: 150px; height: calc(100vh - 300px); display: flex; flex-direction: column; align-items: center; justify-content: space-around; padding: 20px; box-sizing: border-box; }
-        #instruction { font-size: 32px; font-weight: bold; color: #7b1fa2; background: white; padding: 10px 20px; border-radius: 10px; box-shadow: 0 4px #ce93d8; }
-        #enemy-hand { font-size: 80px; }
-        .btn-group { display: flex; gap: 10px; }
-        .hand-btn { width: 90px; height: 90px; font-size: 40px; border: none; border-radius: 15px; background: white; box-shadow: 0 5px #ba68c8; cursor: pointer; }
-        #ui { position: absolute; top: 160px; width: 100%; text-align: center; color: #7b1fa2; font-size: 24px; font-weight: bold; }
+        * { box-sizing: border-box; }
+        body { margin: 0; overflow: hidden; background: #f3e5f5; font-family: sans-serif; touch-action: none; position: fixed; width: 100%; height: 100%; }
         
-        /* 終了後メニュー */
-        #end-menu { 
-            position: absolute; top: 150px; width: 100%; height: calc(100vh - 300px); 
-            background: rgba(255,255,255,0.95); display: none; flex-direction: column; 
-            align-items: center; justify-content: center; z-index: 60; 
+        /* 広告枠：100px */
+        #ad-top, #ad-bottom { position: fixed; left: 0; width: 100%; height: 100px; background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; }
+        #ad-top { top: 0; } #ad-bottom { bottom: 0; }
+        iframe { border: none; width: 100%; height: 100px; }
+
+        /* ゲーム本体エリア */
+        #game-outer { position: absolute; top: 100px; bottom: 100px; left: 0; right: 0; background: #f3e5f5; overflow: hidden; }
+        #game-area { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: space-around; padding: 10px; }
+        
+        #ui { position: absolute; top: 5px; width: 100%; text-align: center; color: #7b1fa2; font-size: 20px; font-weight: bold; z-index: 10; }
+        #instruction { font-size: 28px; font-weight: bold; color: #7b1fa2; background: white; padding: 8px 15px; border-radius: 10px; box-shadow: 0 4px #ce93d8; }
+        #enemy-hand { font-size: 70px; }
+        
+        .btn-group { display: flex; gap: 8px; }
+        .hand-btn { width: 80px; height: 80px; font-size: 36px; border: none; border-radius: 15px; background: white; box-shadow: 0 5px #ba68c8; cursor: pointer; }
+        .hand-btn:active { transform: translateY(3px); box-shadow: 0 2px #ba68c8; }
+
+        /* メニュー画面：スクロール対応 */
+        #menuScreen { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(255,255,255,0.96); display: flex; flex-direction: column; 
+            align-items: center; justify-content: flex-start; z-index: 50; 
+            padding: 5px 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
         }
-        .menu-btn { 
-            width: 220px; padding: 15px; margin: 10px; font-size: 20px; 
-            border: none; border-radius: 30px; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center;
-        }
-        #retry-btn { background: #9c27b0; color: white; box-shadow: 0 5px #7b1fa2; }
-        #more-games-btn { background: #ff4081; color: white; box-shadow: 0 5px #c2185b; }
+
+        #ad-middle-container { width: 300px; height: 120px; background: #000; margin: 5px 0; display: none; justify-content: center; align-items: center; overflow: hidden; flex-shrink: 0; }
+
+        .menu-btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 8px; padding-bottom: 20px; }
+        .menu-btn { width: 220px; padding: 12px; font-size: 18px; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; }
+        #retry-btn { background: #9c27b0; color: white; box-shadow: 0 4px #7b1fa2; }
+        #more-games-btn { background: #ff4081; color: white; box-shadow: 0 4px #c2185b; }
     </style>
 </head>
 <body>
-    <div id="ad-top"><iframe src="ad.html"></iframe></div>
-    <div id="ad-bottom"><iframe src="ad.html"></iframe></div>
-    
-    <div id="end-menu">
-        <h2 id="result-msg" style="color:#7b1fa2;">GAME OVER</h2>
-        <button id="retry-btn" class="menu-btn" onclick="startNewGame()">もう一度遊ぶ</button>
-        <a href="https://saaaachi.github.io/Color-Finder/" id="more-games-btn" class="menu-btn">他のゲームはこちら</a>
-    </div>
 
-    <div id="ui">SCORE: 0</div>
-    <div id="game-area">
-        <div id="instruction">指示待ち</div>
-        <div id="enemy-hand">❔</div>
-        <div class="btn-group">
-            <button class="hand-btn" onclick="checkAnswer('✊')">✊</button>
-            <button class="hand-btn" onclick="checkAnswer('✌️')">✌️</button>
-            <button class="hand-btn" onclick="checkAnswer('✋')">✋</button>
+    <div id="ad-top"><iframe src="ad.html"></iframe></div>
+
+    <div id="game-outer">
+        <div id="ui">SCORE: 0</div>
+        
+        <div id="game-area">
+            <div id="instruction">指示待ち</div>
+            <div id="enemy-hand">❔</div>
+            <div class="btn-group">
+                <button class="hand-btn" onclick="checkAnswer('✊')">✊</button>
+                <button class="hand-btn" onclick="checkAnswer('✌️')">✌️</button>
+                <button class="hand-btn" onclick="checkAnswer('✋')">✋</button>
+            </div>
+        </div>
+
+        <div id="menuScreen">
+            <h2 id="result-msg" style="color:#7b1fa2; margin: 10px 0; font-size: 22px;">あとだしジャンケン</h2>
+            <p id="menuDesc" style="font-size: 13px; color: #666; margin: 0;">指示に合わせて手を選んでね！</p>
+            
+            <div id="ad-middle-container">
+                <script src="https://adm.shinobi.jp/s/1e6de436ea850948e238e975a93767eb"></script>
+            </div>
+
+            <div class="menu-btn-group">
+                <button id="retry-btn" class="menu-btn" onclick="startNewGame()">スタート！</button>
+                <a href="https://saaaachi.github.io/Color-Finder/" id="more-games-btn" class="menu-btn">他のゲームはこちら</a>
+            </div>
         </div>
     </div>
+
+    <div id="ad-bottom"><iframe src="ad.html"></iframe></div>
 
     <script>
         const hands = ['✊', '✌️', '✋'];
         const insts = ['勝って！', '負けて！'];
         let currentHand, currentInst, score = 0, gameActive = false, timer;
 
+        const menuScreen = document.getElementById("menuScreen");
+        const adMid = document.getElementById("ad-middle-container");
+        const resultMsg = document.getElementById("result-msg");
+        const retryBtn = document.getElementById("retry-btn");
+
         function startNewGame() {
-            document.getElementById("end-menu").style.display = "none";
-            gameActive = true; score = 0; 
+            menuScreen.style.display = "none";
+            adMid.style.display = "none";
+            gameActive = true; 
+            score = 0; 
             document.getElementById("ui").innerText = "SCORE: 0";
             nextQuestion();
         }
@@ -71,12 +102,13 @@
             document.getElementById("instruction").innerText = currentInst;
             
             clearTimeout(timer);
-            timer = setTimeout(() => { gameOver("時間切れ！"); }, Math.max(800, 2000 - score * 50));
+            // スコアが上がるほど制限時間が短くなる
+            timer = setTimeout(() => { gameOver("時間切れ！"); }, Math.max(700, 2000 - score * 60));
         }
 
         function checkAnswer(playerHand) {
             if(!gameActive) return;
-            let result;
+            let result; // 0:あいこ, 1:勝ち, 2:負け
             if(playerHand === currentHand) result = 0;
             else if((playerHand==='✊'&&currentHand==='✌️')||(playerHand==='✌️'&&currentHand==='✋')||(playerHand==='✋'&&currentHand==='✊')) result = 1;
             else result = 2;
@@ -94,18 +126,21 @@
         function gameOver(msg) { 
             gameActive = false; 
             clearTimeout(timer);
-            document.getElementById("result-msg").innerText = msg + "\nSCORE: " + score;
-            document.getElementById("end-menu").style.display = "flex";
+            resultMsg.innerText = msg + "\nSCORE: " + score;
+            retryBtn.innerText = "もう一度遊ぶ";
+            adMid.style.display = "flex";
+            menuScreen.style.display = "flex";
+            menuScreen.scrollTop = 0;
         }
 
-        // 初回起動
-        window.onload = () => {
-            document.getElementById("end-menu").style.display = "flex";
-            document.getElementById("result-msg").innerText = "あとだしジャンケン";
-            document.getElementById("retry-btn").innerText = "スタート！";
-        };
-
-        setInterval(() => { const fs = document.querySelectorAll('iframe'); fs.forEach(f => { const s = f.src; f.src = "about:blank"; setTimeout(() => f.src = s, 100); }); }, 30000);
+        // 広告更新用
+        setInterval(() => {
+            const fs = document.querySelectorAll('iframe');
+            fs.forEach(f => {
+                const s = f.src; f.src = "about:blank";
+                setTimeout(() => f.src = s, 100);
+            });
+        }, 29000);
     </script>
 </body>
 </html>
