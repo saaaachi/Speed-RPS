@@ -3,47 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Speed RPS - 第28弾</title>
+    <title>Speed RPS - v26.6</title>
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; overflow: hidden; background: #f3e5f5; font-family: sans-serif; touch-action: none; position: fixed; width: 100%; height: 100%; }
         
-        /* 広告枠：100px */
-        #ad-top, #ad-bottom { position: fixed; left: 0; width: 100%; height: 100px; background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; }
-        #ad-top { top: 0; } #ad-bottom { bottom: 0; }
-        iframe { border: none; width: 100%; height: 100px; }
+        /* 広告枠：150px (共通仕様) */
+        #ad-top, #ad-bottom { position: fixed; left: 0; width: 100%; height: 150px; background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; }
+        #ad-top { top: 0; border-bottom: 1px solid #444; } 
+        #ad-bottom { bottom: 0; border-top: 1px solid #444; }
+        iframe { border: none; width: 100%; height: 150px; background: #333; }
 
         /* ゲーム本体エリア */
-        #game-outer { position: absolute; top: 100px; bottom: 100px; left: 0; right: 0; background: #f3e5f5; overflow: hidden; }
+        #game-outer { position: absolute; top: 150px; bottom: 150px; left: 0; right: 0; background: #f3e5f5; overflow: hidden; }
         #game-area { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: space-around; padding: 10px; }
         
         #ui { position: absolute; top: 5px; width: 100%; text-align: center; color: #7b1fa2; font-size: 20px; font-weight: bold; z-index: 10; }
         #instruction { font-size: 28px; font-weight: bold; color: #7b1fa2; background: white; padding: 8px 15px; border-radius: 10px; box-shadow: 0 4px #ce93d8; }
-        #enemy-hand { font-size: 70px; }
+        #enemy-hand { font-size: 80px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
         
-        .btn-group { display: flex; gap: 8px; }
-        .hand-btn { width: 80px; height: 80px; font-size: 36px; border: none; border-radius: 15px; background: white; box-shadow: 0 5px #ba68c8; cursor: pointer; }
+        .btn-group { display: flex; gap: 12px; }
+        .hand-btn { 
+            width: 85px; height: 85px; font-size: 40px; border: none; border-radius: 20px; 
+            background: white; box-shadow: 0 5px #ba68c8; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+        }
         .hand-btn:active { transform: translateY(3px); box-shadow: 0 2px #ba68c8; }
 
-        /* メニュー画面：スクロール対応 */
+        /* メニュー画面 */
         #menuScreen { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(255,255,255,0.96); display: flex; flex-direction: column; 
-            align-items: center; justify-content: flex-start; z-index: 50; 
-            padding: 5px 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+            align-items: center; justify-content: center; z-index: 200; padding: 20px 0;
         }
 
-        #ad-middle-container { width: 300px; height: 120px; background: #000; margin: 5px 0; display: none; justify-content: center; align-items: center; overflow: hidden; flex-shrink: 0; }
+        /* 中央広告（i-mobile） */
+        #ad-middle-container { 
+            width: 320px; height: 100px; background: #eee; margin: 15px 0; 
+            display: none; justify-content: center; align-items: center; 
+            overflow: hidden; flex-shrink: 0; border: 1px solid #ddd;
+            transition: opacity 0.3s;
+        }
 
-        .menu-btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 8px; padding-bottom: 20px; }
-        .menu-btn { width: 220px; padding: 12px; font-size: 18px; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; }
+        .menu-btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 12px; }
+        .menu-btn { width: 240px; padding: 15px; font-size: 18px; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; transition: 0.2s; }
         #retry-btn { background: #9c27b0; color: white; box-shadow: 0 4px #7b1fa2; }
+        #retry-btn:disabled { background: #ccc; box-shadow: none; color: #888; cursor: default; }
         #more-games-btn { background: #ff4081; color: white; box-shadow: 0 4px #c2185b; }
+
+        /* 大広告用カウントダウン付き */
+        #bigAdScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 3000; display: none; justify-content: center; align-items: center; }
+        .ad-frame-wrapper { width: 95%; height: 85%; position: relative; }
+        .ad-close-btn { 
+            position: absolute; top: -15px; right: -15px; 
+            color: white; font-size: 22px; font-weight: bold; 
+            cursor: pointer; background: rgba(0,0,0,0.8); 
+            width: 44px; height: 44px; border-radius: 50%; 
+            display: none; align-items: center; justify-content: center; 
+            z-index: 3100; border: 2px solid white; font-family: sans-serif;
+        }
     </style>
 </head>
 <body>
 
-    <div id="ad-top"><iframe src="ad.html"></iframe></div>
+    <div id="ad-top"><iframe id="frame-top" src="./ad.html?pos=top"></iframe></div>
 
     <div id="game-outer">
         <div id="ui">SCORE: 0</div>
@@ -52,18 +76,21 @@
             <div id="instruction">指示待ち</div>
             <div id="enemy-hand">❔</div>
             <div class="btn-group">
-                <button class="hand-btn" onclick="checkAnswer('✊')">✊</button>
-                <button class="hand-btn" onclick="checkAnswer('✌️')">✌️</button>
-                <button class="hand-btn" onclick="checkAnswer('✋')">✋</button>
+                <button class="hand-btn" onpointerdown="checkAnswer('✊')">✊</button>
+                <button class="hand-btn" onpointerdown="checkAnswer('✌️')">✌️</button>
+                <button class="hand-btn" onpointerdown="checkAnswer('✋')">✋</button>
             </div>
         </div>
 
         <div id="menuScreen">
-            <h2 id="result-msg" style="color:#7b1fa2; margin: 10px 0; font-size: 22px;">あとだしジャンケン</h2>
-            <p id="menuDesc" style="font-size: 13px; color: #666; margin: 0;">指示に合わせて手を選んでね！</p>
+            <h2 id="result-msg" style="color:#7b1fa2; margin: 10px 0; font-size: 26px; text-align: center;">あとだしジャンケン</h2>
+            <p id="menuDesc" style="font-size: 14px; color: #666; margin: 0 0 10px 0;">指示に合わせて手を選んでね！</p>
             
             <div id="ad-middle-container">
-                <script src="https://adm.shinobi.jp/s/1e6de436ea850948e238e975a93767eb"></script>
+                <div id="im-8b492cea6667490da71c488bdcc7cfc8">
+                    <script async src="https://imp-adedge.i-mobile.co.jp/script/v1/spot.js?20220104"></script>
+                    <script>(window.adsbyimobile=window.adsbyimobile||[]).push({pid:84561,mid:590804,asid:1924211,type:"banner",display:"inline",elementid:"im-8b492cea6667490da71c488bdcc7cfc8"})</script>
+                </div>
             </div>
 
             <div class="menu-btn-group">
@@ -71,14 +98,21 @@
                 <a href="https://saaaachi.github.io/" id="more-games-btn" class="menu-btn">他のゲームはこちら</a>
             </div>
         </div>
+
+        <div id="bigAdScreen">
+            <div class="ad-frame-wrapper">
+                <div id="ad-close-btn" class="ad-close-btn" onclick="closeBigAd()"></div>
+                <iframe id="ad-large-frame" src="" style="width:100%; height:100%; border:none;"></iframe>
+            </div>
+        </div>
     </div>
 
-    <div id="ad-bottom"><iframe src="ad.html"></iframe></div>
+    <div id="ad-bottom"><iframe id="frame-bottom" src="./ad.html?pos=bottom"></iframe></div>
 
     <script>
         const hands = ['✊', '✌️', '✋'];
         const insts = ['勝って！', '負けて！'];
-        let currentHand, currentInst, score = 0, gameActive = false, timer;
+        let currentHand, currentInst, score = 0, gameActive = false, timer, playCount = 0;
 
         const menuScreen = document.getElementById("menuScreen");
         const adMid = document.getElementById("ad-middle-container");
@@ -102,8 +136,8 @@
             document.getElementById("instruction").innerText = currentInst;
             
             clearTimeout(timer);
-            // スコアが上がるほど制限時間が短くなる
-            timer = setTimeout(() => { gameOver("時間切れ！"); }, Math.max(700, 2000 - score * 60));
+            // 難易度調整：1.8秒から徐々に短縮（最低0.65秒）
+            timer = setTimeout(() => { gameOver("時間切れ！⏳"); }, Math.max(650, 1800 - score * 60));
         }
 
         function checkAnswer(playerHand) {
@@ -119,28 +153,81 @@
                 document.getElementById("ui").innerText = "SCORE: " + score;
                 nextQuestion(); 
             } else { 
-                gameOver("まちがい！"); 
+                gameOver("まちがい！😱"); 
             }
         }
 
         function gameOver(msg) { 
             gameActive = false; 
+            playCount++;
             clearTimeout(timer);
-            resultMsg.innerText = msg + "\nSCORE: " + score;
-            retryBtn.innerText = "もう一度遊ぶ";
+
+            // --- ✨ 誤タップ防止ガード発動 (1.5秒) ---
+            retryBtn.innerText = "お待ちください...";
+            retryBtn.disabled = true;
             adMid.style.display = "flex";
+            adMid.style.pointerEvents = "none";
+            adMid.style.opacity = "0.4";
+
+            resultMsg.innerText = msg;
+            document.getElementById("menuDesc").innerText = "SCORE: " + score;
             menuScreen.style.display = "flex";
-            menuScreen.scrollTop = 0;
+
+            setTimeout(() => {
+                adMid.style.pointerEvents = "auto";
+                adMid.style.opacity = "1";
+                retryBtn.disabled = false;
+                retryBtn.innerText = "もう一度遊ぶ";
+            }, 1500);
+
+            // 大広告判定（3回目、以降7回ごと）
+            if (playCount === 3 || (playCount > 3 && (playCount - 3) % 7 === 0)) {
+                setTimeout(showBigAd, 500);
+            }
         }
 
-        // 広告更新用
+        function showBigAd() {
+            const screen = document.getElementById("bigAdScreen");
+            const closeBtn = document.getElementById("ad-close-btn");
+            document.getElementById("ad-large-frame").src = "./ad.large.html?t=" + Date.now();
+            screen.style.display = "flex";
+            
+            let countdown = 5;
+            closeBtn.style.display = "flex";
+            closeBtn.innerText = countdown;
+            closeBtn.style.pointerEvents = "none";
+            closeBtn.style.opacity = "0.7";
+
+            const timerInt = setInterval(() => {
+                countdown--;
+                closeBtn.innerText = countdown;
+                if (countdown <= 0) {
+                    clearInterval(timerInt);
+                    closeBtn.innerText = "×";
+                    closeBtn.style.pointerEvents = "auto";
+                    closeBtn.style.opacity = "1";
+                }
+            }, 1000);
+        }
+
+        function closeBigAd() {
+            document.getElementById("bigAdScreen").style.display = "none";
+            document.getElementById("ad-large-frame").src = "";
+        }
+
+        // 広告リフレッシュ (30秒交互)
         setInterval(() => {
-            const fs = document.querySelectorAll('iframe');
-            fs.forEach(f => {
-                const s = f.src; f.src = "about:blank";
-                setTimeout(() => f.src = s, 100);
-            });
-        }, 29000);
+            const f = document.getElementById('frame-top');
+            if(f) f.src = "./ad.html?pos=top&t=" + Date.now();
+        }, 30000);
+        setTimeout(() => {
+            setInterval(() => {
+                const f = document.getElementById('frame-bottom');
+                if(f) f.src = "./ad.html?pos=bottom&t=" + Date.now();
+            }, 30000);
+        }, 15000);
+
+        window.onload = () => { menuScreen.style.display = "flex"; };
     </script>
 </body>
 </html>
